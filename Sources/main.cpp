@@ -14,6 +14,7 @@
 #include <vector>
 #include <algorithm>
 #include "videomanager.h"
+#include "affinetransform.h"
 
 using namespace cv;
 using namespace cv::xfeatures2d;
@@ -368,8 +369,8 @@ int main()
     vm.createVideo();
     return 0;
      */
-/*
-     string number;
+
+    /* string number;
      int minHessian = 600;
      Ptr<SURF> detector = SURF::create(minHessian);
      vector<KeyPoint> keypoint_1, keypoint_2;
@@ -379,7 +380,7 @@ int main()
      Mat img1, img2;
      int mid_x, mid_y;
      int image_debut = 0;
-     int image_fin_exclu = 99;
+     int image_fin_exclu = 5;
 
 
      cout << "Processing first image" <<endl;
@@ -489,6 +490,7 @@ int main()
                  good_matches.push_back(matches[j]);
 
              cout << "3rd match ok" << endl;
+             cout << seuil << endl;
 
              if(good_matches.size() == 3)
                  break;
@@ -521,11 +523,19 @@ int main()
      //Mat mat = createWarpedImages(2, affTrans);
      for(int j = 0 ; j < image_fin_exclu - image_debut ; j++)
         { createWarpedImages2(j, affTrans); cout << j << endl; }
+
 */
-     cout << "Creating video" << endl;
-     videoManager vm("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res",
-                          "png",99,"","test");
-     vm.createVideo();
+
+    affineTransform aff(0, 99 , "C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/20151105/", "Image 2015_11_04_180411,842 Image ", ".png");
+    aff.process();
+    cout << "Creating video" << endl;
+    videoManager vm("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res",
+                          "png",99,"","vid");
+    videoManager vm2("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res",
+                          "png",99,"mean","meanvid");
+    vm.createVideo();
+    vm2.createVideo();
+
      return 0;
 }
 
