@@ -25,6 +25,7 @@ Operation::Operation()
  * \brief Int vers String
  *
  * \param n : entier à transformer en string
+ * \return chaine de caractères
  *
  * Renvoie une chaine de 3 caractères correspondant à l'entier n (ex : 12 -> "012")
  */
