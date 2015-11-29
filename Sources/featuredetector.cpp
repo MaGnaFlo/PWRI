@@ -26,7 +26,6 @@ featureDetector::featureDetector(int minHessian)
 void featureDetector::findKeypoints(string path, int oneOrTwo)
 {
     Mat img;
-
     img = imread(path, IMREAD_GRAYSCALE);
     std::cout << path << std::endl;
 

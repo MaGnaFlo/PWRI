@@ -17,13 +17,15 @@ public:
 
     void setMidXY();
 
-    cv::Mat createWarpedImages_rec(int i, std::vector<cv::KeyPoint> kpt1, std::vector<cv::KeyPoint> kpt2);
-    void  createWarpedImages_it(int i, std::vector<cv::KeyPoint> kpt1, std::vector<cv::KeyPoint> kpt2);
+    cv::Mat createWarpedImages_rec(int i);
+    void  createWarpedImages_it();
+    void createWarpedImages_it(cv::Mat mean);
     void findAffineTransform(std::vector<cv::DMatch> &matches, std::vector<cv::KeyPoint> &keypoint_1, std::vector<cv::KeyPoint> &keypoint_2);
     void process();
     void displayMatches(const std::vector<cv::DMatch> &matches, const std::vector<cv::KeyPoint> &keypoint_1, const std::vector<cv::KeyPoint> &keypoint_2, const cv::Mat &img1, const cv::Mat &img2, const std::string path);
-    void createWarpedImages_it_mean(int j, std::vector<cv::KeyPoint> kpt1, std::vector<cv::KeyPoint> kpt2,cv::Mat mean);
 
+
+    void displayFeatures(const std::vector<cv::KeyPoint> &kpt1, const std::vector<cv::KeyPoint> &kpt2, int i);
 private:
     Operation _op;
     std::vector<cv::Mat> _affVector;

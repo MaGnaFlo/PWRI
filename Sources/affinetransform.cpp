@@ -23,99 +23,102 @@ affineTransform::affineTransform(int imgStart, int imgEnd, string path, string n
 
 void affineTransform::setMidXY()
 {
-    Mat im = imread(_path + _name + _op.int2string(_imgStart) + _ext);
+    Mat im = imread(_path + _name + _op.int2string(_imgStart) + _ext, IMREAD_GRAYSCALE);
     _midX = im.size().width / 2;
     _midY = im.size().height / 2;
     cout << "midX = " << _midX << " - midY = " << _midY << endl;
 }
 
 
-cv::Mat affineTransform::createWarpedImages_rec(int i, vector<KeyPoint> kpt1, vector<KeyPoint> kpt2)
+cv::Mat affineTransform::createWarpedImages_rec(int i)
 {
-    if(i == 0) {
-        cout << "first" <<endl;
-        Mat imgi = imread("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/20151105/Image 2015_11_04_180411,842 Image 000.png", IMREAD_GRAYSCALE);
-        imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/000.png", imgi);
+    cout << "Utilisation de createWarpedImages recursive" << endl;
+    cout << "i = " << i << endl;
+
+    if(i == 1) {
+        string number = _op.int2string(i + _imgStart - 1);
+        Mat imgi = imread(_path + _name + number + _ext, IMREAD_GRAYSCALE);
+        imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/" + number + _ext, imgi);
         return Mat::eye(3,3,CV_64F);
     }
     else {
-        cout << _affVector.size() << endl;
         Mat transf3x3 = Mat::zeros(3,3,CV_64F);
         for(int m = 0 ; m<2 ; m++)
             for(int n = 0 ; n<3 ; n++)
-                transf3x3.at<double>(m,n) = _affVector[i].at<double>(m,n);
+                transf3x3.at<double>(m,n) = _affVector[i-2].at<double>(m,n);
 
         transf3x3.at<double>(2,2) = 1.f;
 
-        Mat res = transf3x3 * createWarpedImages_rec(i - 1, kpt1, kpt2);
+        Mat res = transf3x3 * createWarpedImages_rec(i - 1);
 
         Mat res2x3 = res.rowRange(0,2) / res.at<double>(2,2);
 
-        string number = _op.int2string(i);
-        Mat imgi = imread("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/20151105/Image 2015_11_04_180411,842 Image " + number + ".png", IMREAD_GRAYSCALE);
+        string number = _op.int2string(i + _imgStart - 1);
+        Mat imgi = imread(_path + _name + number + _ext, IMREAD_GRAYSCALE);
         Mat img_res;
 
         warpAffine(imgi, img_res, res2x3, imgi.size());
-        imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/" + number + ".png", img_res);
+        imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/" + number + _ext, img_res);
+        return img_res;
+    }
+}
 
-        //---
-        if(i+1<_imgEnd)
-        {
-            Mat imgi1 = imread("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/20151105/Image 2015_11_04_180411,842 Image " + _op.int2string(i+1) + ".png", IMREAD_GRAYSCALE);
-            displayMatches(_goodMatches, kpt1, kpt2, imgi, imgi1, "C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/features/" + number + ".png");
+void affineTransform::createWarpedImages_it()
+{
+    cout << "Utilisation de createWarpedImages iterative (sans moyenne)" << endl;
+
+    Mat trans_product;
+    Mat t_3x3;
+    Mat trans_product_2x3;
+    string number;
+    Mat imgi;
+    Mat imgi1;
+    Mat img_warped;
+
+    for(int j = _imgStart ; j<_imgEnd ; j++)
+    {
+        trans_product = Mat::eye(3,3,CV_64F);
+        for(int i = 0 ; i<j-_imgStart ; i++) {
+            t_3x3 = _op.convert2x3to3x3(_affVector[i]);
+            trans_product = trans_product * t_3x3;
         }
-            return res;
+
+        trans_product_2x3 = trans_product.rowRange(0,2) / trans_product.at<double>(2,2);
+
+        number = _op.int2string(j);
+        imgi = imread(_path + _name + number + _ext, IMREAD_GRAYSCALE);
+
+        warpAffine(imgi, img_warped, trans_product_2x3, imgi.size());
+        imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/" + number + ".png", img_warped);
     }
 }
 
-void affineTransform::createWarpedImages_it(int j, vector<KeyPoint> kpt1, vector<KeyPoint> kpt2)
+void affineTransform::createWarpedImages_it(Mat mean)
 {
-    Mat trans_product = Mat::eye(3,3,CV_64F);
-    for(int i = 0 ; i<j ; i++) {
-        Mat t_3x3 = _op.convert2x3to3x3(_affVector[i]);
-        trans_product = trans_product * t_3x3;
-    }
-
-    Mat trans_product_2x3 = trans_product.rowRange(0,2) / trans_product.at<double>(2,2);
-
-    string number = _op.int2string(j);
-    Mat imgi = imread("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/20151105/Image 2015_11_04_180411,842 Image " + number + ".png", IMREAD_GRAYSCALE);
-    Mat img_warped;
-
-    warpAffine(imgi, img_warped, trans_product_2x3, imgi.size());
-    imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/" + number + ".png", img_warped);
-
-    //----
-    if(j+1<_imgEnd)
-    {
-        Mat imgi1 = imread("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/20151105/Image 2015_11_04_180411,842 Image " + _op.int2string(j+1) + ".png", IMREAD_GRAYSCALE);
-        displayMatches(_goodMatches, kpt1, kpt2, imgi, imgi1, "C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/features/" + number + ".png");
-    }
-}
-
-void affineTransform::createWarpedImages_it_mean(int j, vector<KeyPoint> kpt1, vector<KeyPoint> kpt2, Mat mean)
-{
-    Mat trans_product = Mat::eye(3,3,CV_64F);
+    cout << "Utilisation de createWarpedImages iterative (avec moyenne)" << endl;
+    Mat trans_product;
     Mat t_3x3 = _op.convert2x3to3x3(mean);
-    for(int i = 0 ; i<j ; i++) {
-        trans_product = trans_product * t_3x3;
-    }
-
-    Mat trans_product_2x3 = trans_product.rowRange(0,2) / trans_product.at<double>(2,2);
-
-    string number = _op.int2string(j);
-    Mat imgi = imread("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/20151105/Image 2015_11_04_180411,842 Image " + number + ".png", IMREAD_GRAYSCALE);
+    Mat trans_product_2x3;
+    string number;
+    Mat imgi;
+    Mat imgi1;
     Mat img_warped;
 
-    warpAffine(imgi, img_warped, trans_product_2x3, imgi.size());
-    imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/mean" + number + ".png", img_warped);
-
-    //----
-    /*if(j+1<_imgEnd)
+    for(int j = _imgStart ; j<_imgEnd ; j++)
     {
-        Mat imgi1 = imread("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/20151105/Image 2015_11_04_180411,842 Image " + _op.int2string(j+1) + ".png", IMREAD_GRAYSCALE);
-        displayMatches(_goodMatches, kpt1, kpt2, imgi, imgi1, "C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/features/" + number + ".png");
-    }*/
+        trans_product = Mat::eye(3,3,CV_64F);
+        for(int i = 0 ; i<j-_imgStart ; i++) {
+            trans_product = trans_product * t_3x3;
+        }
+
+        trans_product_2x3 = trans_product.rowRange(0,2) / trans_product.at<double>(2,2);
+
+        number = _op.int2string(j);
+        imgi = imread(_path + _name + number + _ext, IMREAD_GRAYSCALE);
+
+        warpAffine(imgi, img_warped, trans_product_2x3, imgi.size());
+        imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/" + number + ".png", img_warped);
+    }
 }
 
 void affineTransform::findAffineTransform(std::vector<DMatch> &matches, std::vector<KeyPoint> &keypoint_1, std::vector<KeyPoint> &keypoint_2)
@@ -130,7 +133,7 @@ void affineTransform::findAffineTransform(std::vector<DMatch> &matches, std::vec
     vector<DMatch> good_matches;
     Point2f coord1[3], coord2[3];
     unsigned int j = 0;
-    int seuil = 200;
+    int seuil = min(_midX, _midY)/2;
 
     while(true) {
         good_matches.clear();
@@ -224,7 +227,7 @@ void affineTransform::process()
 
     _affVector.clear();
 
-    for(int i = _imgStart ; i<_imgEnd-1 ; i++) // On risque de perdre une image dans le tas
+    for(int i = _imgStart ; i<_imgEnd-1 ; i++)
     {
         if(i == _imgStart)
             featDet.findKeypoints(_path + _name + _op.int2string(i) + _ext, 1);
@@ -239,15 +242,12 @@ void affineTransform::process()
         kpt2 = featDet.getKeyPoints(2);
 
         findAffineTransform(matches, kpt1, kpt2);
-
-
+        displayFeatures(kpt1, kpt2, i);
     }
 
-    for(int j = 0 ; j<_imgEnd ; j++)
-    {
-        createWarpedImages_it_mean(j, kpt1, kpt2, _op.meanMat(_affVector));
-        createWarpedImages_it(j, kpt1, kpt2);
-    }
+    //createWarpedImages_it(kpt1, kpt2, _op.meanMat(_affVector));
+    createWarpedImages_it();
+    //createWarpedImages_rec(_imgEnd - _imgStart, kpt1, kpt2);
 }
 
 void affineTransform::displayMatches(const std::vector<DMatch> &matches, const std::vector<KeyPoint> &keypoint_1, const std::vector<KeyPoint> &keypoint_2, const Mat &img1, const Mat &img2, const string path)
@@ -255,4 +255,11 @@ void affineTransform::displayMatches(const std::vector<DMatch> &matches, const s
     Mat img_out;
     drawMatches(img1, keypoint_1, img2, keypoint_2, matches, img_out, Scalar::all(-1), Scalar::all(-1), vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
     imwrite(path, img_out);
+}
+
+void affineTransform::displayFeatures(const std::vector<KeyPoint> &kpt1, const std::vector<KeyPoint> &kpt2, int i) {
+
+    Mat img1 = imread(_path + _name + _op.int2string(i) + _ext, IMREAD_GRAYSCALE);
+    Mat img2 = imread(_path + _name + _op.int2string(i+1) + _ext, IMREAD_GRAYSCALE);
+    displayMatches(_goodMatches, kpt1, kpt2, img1, img2, "C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/features/" + _op.int2string(i) + ".png");
 }

@@ -15,7 +15,6 @@ class videoManager
 public:
 
     //Constructors
-    videoManager(cv::VideoCapture capt); //Load a video.
     videoManager();
 
     /* Load a batch of images via their path, their extension, the name of the images (if there is one)
@@ -28,7 +27,6 @@ public:
     /* This method allows to create a video out of the image sequence you named in the constructor or
      * using the setters.
      */
-
     void createVideo();
     void setVideo();
     cv::VideoWriter getVideo();
