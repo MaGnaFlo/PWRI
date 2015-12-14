@@ -10753,6 +10753,15 @@ void QCustomPlot::mouseMoveEvent(QMouseEvent *event)
   QWidget::mouseMoveEvent(event);
 }
 
+void QCustomPlot::showPointToolTip(QMouseEvent *event)
+{
+
+    double x = this->xAxis->pixelToCoord(event->pos().x());
+    double y = this->yAxis->pixelToCoord(event->pos().y());
+
+    setToolTip(QString("%1 , %2").arg(x).arg(y));
+}
+
 /*! \internal
   
   Event handler for when a mouse button is released. Emits the \ref mouseRelease signal.

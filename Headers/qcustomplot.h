@@ -1819,6 +1819,8 @@ public:
   QCPAxis *xAxis, *yAxis, *xAxis2, *yAxis2;
   QCPLegend *legend;
   
+public slots:
+  void showPointToolTip(QMouseEvent *event);
 signals:
   void mouseDoubleClick(QMouseEvent *event);
   void mousePress(QMouseEvent *event);

@@ -1,7 +1,5 @@
-
 #include <stdio.h>
 #include <iostream>
-#include <algorithm>
 #include "mainwindow.h"
 #include <QApplication>
 

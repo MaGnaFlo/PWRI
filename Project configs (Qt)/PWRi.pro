@@ -1,9 +1,8 @@
-CONFIG += release
-CONFIG += debug
 TEMPLATE = app
 
 QT += widgets printsupport
 
+RC_FILE = pwri.rc
 
 INCLUDEPATH += C:\opencv\release2\install\include
 LIBS += "C:/opencv/release2/bin/*.dll"
@@ -19,7 +18,12 @@ SOURCES += \
     affinetransform.cpp \
     featuredetector.cpp \
     qcustomplot.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    calibrationfilemanager.cpp \
+    dataanalyzer.cpp \
+    spectrumextractor.cpp \
+    mediamanager.cpp \
+    datafilemanager.cpp
 
 HEADERS += \
     videomanager.h \
@@ -27,7 +31,12 @@ HEADERS += \
     affinetransform.h \
     featuredetector.h \
     qcustomplot.h \
-    mainwindow.h
+    mainwindow.h \
+    calibrationfilemanager.h \
+    dataanalyzer.h \
+    spectrumextractor.h \
+    mediamanager.h \
+    datafilemanager.h
 
 FORMS += \
     mainwindow.ui

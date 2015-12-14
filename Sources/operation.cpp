@@ -1,39 +1,10 @@
-/*!
- * \file operation.cpp
- * \brief Classe d'opérations générales.
- * \author {F. Lardeux, T. Maifret, V. Petitjean}
- * \date 20/11/2015
- *
- * Classe comprenant plusieurs opérations basiques, telles que des modifications de matrices, de chaînes de caractres ...
- */
-
-
 #include "operation.h"
-#include <iostream>
-#include <istream>
-#include <sys/stat.h>
-#include <unistd.h>
 
 using namespace std;
-
-/*!
- * \fn Operation::Operation()
- * \brief Constructeur
- */
 
 Operation::Operation()
 {
 }
-
-/*!
- * \fn std::string Operation::int2string(int n)
- * \brief Int vers String
- *
- * \param n : entier à transformer en string
- * \return chaine de caractères
- *
- * Renvoie une chaine de 3 caractères correspondant à l'entier n (ex : 12 -> "012")
- */
 
 std::string Operation::int2string(int n)
 {
@@ -46,19 +17,8 @@ std::string Operation::int2string(int n)
         number = "0" + convert.str();
     else
         number = convert.str();
-
     return number;
 }
-
-/*!
- * \fn cv::Mat Operation::convert2x3to3x3(cv::Mat transf2x3)
- * \brief Matrice 2x3 en matrice 3x3
- *
- * \param transf2x3 : matice de transformation 2x3
- * \return matrice de transformation homogène 3x3
- *
- * Ajout d'une ligne [0 0 1] pour rendre la matrice de transfo 2x3 homogène
- */
 
 cv::Mat Operation::convert2x3to3x3(cv::Mat transf2x3)
 {
@@ -66,19 +26,9 @@ cv::Mat Operation::convert2x3to3x3(cv::Mat transf2x3)
     for(int m = 0 ; m<2 ; m++)
         for(int n = 0 ; n<3 ; n++)
             transf3x3.at<double>(m,n) = transf2x3.at<double>(m,n);
-
     transf3x3.at<double>(2,2) = 1.f;
-
     return transf3x3;
 }
-
-/*!
- * \fn cv::Mat Operation::meanMat(const std::vector<cv::Mat> matrices)
- * \brief Moyenne d'un vecteur de Matrices
- *
- * \param matrices : vecteur de Matrices nxm
- * \return une matrice mxn, moyenne des matrices du vecteur paramètre
- */
 
 cv::Mat Operation::meanMat(const std::vector<cv::Mat> matrices)
 {
@@ -89,10 +39,11 @@ cv::Mat Operation::meanMat(const std::vector<cv::Mat> matrices)
     return mean;
 }
 
-void Operation::readFileName(std::string filePath, std::string &path, std::string &name, int &imgStart, std::string &ext)
+void Operation::readFileName(std::string filePath, std::string &path, std::string &name, int &imgStart, std::string &ext, bool withNumber)
 {
     int i = filePath.length() - 1;
         string c = "a";
+
         //Recherche de l'extension
         while (c != ".")
         {
@@ -101,10 +52,17 @@ void Operation::readFileName(std::string filePath, std::string &path, std::strin
         }
         int iExt = i+1;
         ext = filePath.substr(iExt, filePath.length() - iExt + 1);
-        //Recherche de ImgStart
-        i -= 3;
-        int iImgStart = i+1;
-        imgStart = string2int(filePath.substr(iImgStart, 3));
+
+        int iImgStart;
+        if(withNumber) //Recherche de ImgStart
+        {
+            i -= 3;
+            iImgStart = i+1;
+            imgStart = string2int(filePath.substr(iImgStart, 3));
+        }
+        else
+            iImgStart = i+1;
+
         //Recherche du nom
         while (c != "/")
         {
@@ -113,6 +71,7 @@ void Operation::readFileName(std::string filePath, std::string &path, std::strin
         }
         int iName = i+2;
         name = filePath.substr(iName, iImgStart - iName);
+
         //Recherche du chemin
         path = filePath.substr(0, iName);
 }
@@ -121,7 +80,6 @@ int Operation::string2int(const string imgStart)
 {
     if(imgStart.length() != 3)
         return 0;
-
     int c = 0, d = 0, u = 0;
     int constASCII = 48;
 
@@ -131,11 +89,13 @@ int Operation::string2int(const string imgStart)
     if(c < 0 || c > 9)
         return 0;
 
+    //Chiffre des dizaines
     ch = imgStart.substr(1,1).c_str()[0];
     d = ch - constASCII;
     if(d < 0 || d > 9)
         return 0;
 
+    //Chiffre des unités
     ch = imgStart.substr(2,1).c_str()[0];
     u = ch - constASCII;
     if(u < 0 || u > 9)
@@ -158,4 +118,25 @@ int Operation::findlastImage(string path, string name, string ext, int imgStart)
         b = stat(mypath.c_str(), &buffer);
     }
     return i-1;
+}
+
+void Operation::minAndMaxVectorDouble(const std::vector<double> &vec, double &m, double &M)
+{
+    if(vec.size() == 0)
+    {
+        cout << "Operation::minAndMaxVectorDouble : Oups ! Empty vector !" << endl;
+        m = 0;
+        M = 0;
+    }
+    m = vec[0];
+    M = vec[0];
+
+    for(unsigned int i = 0; i<vec.size(); i++)
+    {
+        if(vec[i] < m)
+            m = vec[i];
+        if(vec[i] > M)
+            M = vec[i];
+    }
+    cout << "Operation::minAndMaxVectorDouble : Finally, m = " << m << " and M = " << M << endl;
 }

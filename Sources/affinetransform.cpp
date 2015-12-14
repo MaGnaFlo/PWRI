@@ -1,13 +1,12 @@
 #include "affinetransform.h"
-#include "operation.h"
-#include "featuredetector.h"
 
 using namespace std;
 using namespace cv;
 
 affineTransform::affineTransform()
 {
-    setMidXY();
+    _meanTransform = Mat::zeros(2,3,CV_64F);
+    _affVector.push_back(Mat::zeros(2,3,CV_64F));
 }
 
 affineTransform::affineTransform(int imgStart, int imgEnd, string path, string name, string ext)
@@ -19,6 +18,7 @@ affineTransform::affineTransform(int imgStart, int imgEnd, string path, string n
     _ext = ext;
 
     setMidXY();
+    _meanTransform = Mat::zeros(2,3,CV_64F);
 }
 
 void affineTransform::setMidXY()
@@ -26,14 +26,13 @@ void affineTransform::setMidXY()
     Mat im = imread(_path + _name + _op.int2string(_imgStart) + _ext, IMREAD_GRAYSCALE);
     _midX = im.size().width / 2;
     _midY = im.size().height / 2;
-    cout << "midX = " << _midX << " - midY = " << _midY << endl;
+    cout << "affineTransform::setMidXY : midX = " << _midX << " and midY = " << _midY << endl;
 }
 
-
-cv::Mat affineTransform::createWarpedImages_rec(int i)
+cv::Mat affineTransform::createWarpedImages_rec(const int &i)
 {
-    cout << "Utilisation de createWarpedImages recursive" << endl;
-    cout << "i = " << i << endl;
+    cout << "affineTransform::createWarpedImages_rec : Utilisation de createWarpedImages recursive" << endl;
+    cout << "affineTransform::createWarpedImages_rec : i = " << i << endl;
 
     if(i == 1) {
         string number = _op.int2string(i + _imgStart - 1);
@@ -65,15 +64,15 @@ cv::Mat affineTransform::createWarpedImages_rec(int i)
 
 void affineTransform::createWarpedImages_it()
 {
-    cout << "Utilisation de createWarpedImages iterative (sans moyenne)" << endl;
+    cout << "affineTransform::createWarpedImages_it : Utilisation de createWarpedImages iterative (sans moyenne)" << endl;
 
     Mat trans_product;
     Mat t_3x3;
     Mat trans_product_2x3;
     string number;
     Mat imgi;
-    Mat imgi1;
     Mat img_warped;
+
 
     for(int j = _imgStart ; j<_imgEnd ; j++)
     {
@@ -82,26 +81,23 @@ void affineTransform::createWarpedImages_it()
             t_3x3 = _op.convert2x3to3x3(_affVector[i]);
             trans_product = trans_product * t_3x3;
         }
-
         trans_product_2x3 = trans_product.rowRange(0,2) / trans_product.at<double>(2,2);
-
         number = _op.int2string(j);
         imgi = imread(_path + _name + number + _ext, IMREAD_GRAYSCALE);
 
         warpAffine(imgi, img_warped, trans_product_2x3, imgi.size());
-        imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/" + number + ".png", img_warped);
+        imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/" + number + ".png", img_warped); 
     }
 }
 
-void affineTransform::createWarpedImages_it(Mat mean)
+void affineTransform::createWarpedImages_it(const string &pathSave, QProgressBar *progressBar)
 {
-    cout << "Utilisation de createWarpedImages iterative (avec moyenne)" << endl;
+    cout << "affineTransform::createWarpedImages_it : Utilisation de createWarpedImages iterative (avec moyenne)" << endl;
     Mat trans_product;
-    Mat t_3x3 = _op.convert2x3to3x3(mean);
+    Mat t_3x3 = _op.convert2x3to3x3(_meanTransform);
     Mat trans_product_2x3;
     string number;
     Mat imgi;
-    Mat imgi1;
     Mat img_warped;
 
     for(int j = _imgStart ; j<_imgEnd ; j++)
@@ -110,26 +106,20 @@ void affineTransform::createWarpedImages_it(Mat mean)
         for(int i = 0 ; i<j-_imgStart ; i++) {
             trans_product = trans_product * t_3x3;
         }
-
         trans_product_2x3 = trans_product.rowRange(0,2) / trans_product.at<double>(2,2);
 
         number = _op.int2string(j);
         imgi = imread(_path + _name + number + _ext, IMREAD_GRAYSCALE);
 
         warpAffine(imgi, img_warped, trans_product_2x3, imgi.size());
-        imwrite("C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/" + number + ".png", img_warped);
+        imwrite(pathSave + "Processed_" + _name + number + ".png", img_warped);
+        progressBar->setValue((j-_imgStart)/(double)(_imgEnd-_imgStart)*100);
+        progressBar->repaint();
     }
 }
 
-void affineTransform::findAffineTransform(std::vector<DMatch> &matches, std::vector<KeyPoint> &keypoint_1, std::vector<KeyPoint> &keypoint_2)
+void affineTransform::findAffineTransform(const std::vector<DMatch> &matches, const std::vector<KeyPoint> &keypoint_1, const std::vector<KeyPoint> &keypoint_2)
 {
-
-    ///Step 4 : Draw only good matches ---------------------------------------------------------------
-    ///A good match has a distance of less than 2*min_dist,
-    ///or a small arbitrary value (like 0.02) in the event that min is
-    ///very small. radiusMatch can also be used.
-    ///
-
     vector<DMatch> good_matches;
     Point2f coord1[3], coord2[3];
     unsigned int j = 0;
@@ -145,15 +135,14 @@ void affineTransform::findAffineTransform(std::vector<DMatch> &matches, std::vec
               j++;
               if(j>=matches.size())
               {
-                  cout << "on va trop loin pour le 1st match" << endl;
+                  cout << "affineTransform::findAffineTransform : 1st match is found too far" << endl;
                   break;
               }
         }
-
         if(j<matches.size())
         {
             good_matches.push_back(matches[j]);
-            cout << "1st match ok" << endl;
+            cout << "affineTransform::findAffineTransform : 1st match ok" << endl;
         }
 
         j = 0;
@@ -163,15 +152,14 @@ void affineTransform::findAffineTransform(std::vector<DMatch> &matches, std::vec
               j++;
               if(j>=matches.size())
               {
-                  cout << "on va trop loin pour le 2nd match" << endl;
+                  cout << "affineTransform::findAffineTransform : 2nd match is found too far" << endl;
                   break;
               }
         }
-
         if(j<matches.size())
         {
             good_matches.push_back(matches[j]);
-            cout << "2nd match ok" << endl;
+            cout << "affineTransform::findAffineTransform : 2nd match ok" << endl;
         }
 
         j = 0;
@@ -180,25 +168,21 @@ void affineTransform::findAffineTransform(std::vector<DMatch> &matches, std::vec
               j++;
               if(j>=matches.size())
               {
-                  cout << "on va trop loin pour le 3rd match" << endl;
+                  cout << "affineTransform::findAffineTransform : 3rd match is found too far" << endl;
                   break;
               }
         }
-
         if(j<matches.size())
         {
             good_matches.push_back(matches[j]);
-            cout << "3rd match ok" << endl;
+            cout << "affineTransform::findAffineTransform : 3rd match ok" << endl;
         }
-        cout << "seuil = " << seuil << endl;
-
         if(good_matches.size() == 3)
             break;
         else {
             seuil -= 10;
         }
     }
-
     _goodMatches = good_matches;
 
     //Here we find the 3 best matches (6 points : 3 --> match1, 3 --> match2)
@@ -209,17 +193,12 @@ void affineTransform::findAffineTransform(std::vector<DMatch> &matches, std::vec
         coord1[j] = pt1;
         coord2[j] = pt2;
     }
-
-    std::cout << "Points set" << endl;
-    ///Step X : Find the affine transformation matrix
     Mat affineTrans = getAffineTransform(coord2, coord1);
-    std::cout << "Transform ok" << endl;
     _affVector.push_back(affineTrans);
-    std::cout << affineTrans << endl;
-
+    std::cout << "affineTransform::findAffineTransform : " << affineTrans << endl;
 }
 
-void affineTransform::process()
+void affineTransform::process(QProgressBar *progressBar)
 {
     featureDetector featDet;
     vector<DMatch> matches;
@@ -227,6 +206,7 @@ void affineTransform::process()
 
     _affVector.clear();
 
+    cout << "affineTransform::process : _imgStart = " << _imgStart << " and _imgEnd = " << _imgEnd << endl;
     for(int i = _imgStart ; i<_imgEnd-1 ; i++)
     {
         if(i == _imgStart)
@@ -243,11 +223,11 @@ void affineTransform::process()
 
         findAffineTransform(matches, kpt1, kpt2);
         displayFeatures(kpt1, kpt2, i);
-    }
 
-    //createWarpedImages_it(kpt1, kpt2, _op.meanMat(_affVector));
-    createWarpedImages_it();
-    //createWarpedImages_rec(_imgEnd - _imgStart, kpt1, kpt2);
+        progressBar->setValue(i);
+        progressBar->repaint();
+    }
+    _meanTransform = mean(_affVector);
 }
 
 void affineTransform::displayMatches(const std::vector<DMatch> &matches, const std::vector<KeyPoint> &keypoint_1, const std::vector<KeyPoint> &keypoint_2, const Mat &img1, const Mat &img2, const string path)
@@ -261,5 +241,49 @@ void affineTransform::displayFeatures(const std::vector<KeyPoint> &kpt1, const s
 
     Mat img1 = imread(_path + _name + _op.int2string(i) + _ext, IMREAD_GRAYSCALE);
     Mat img2 = imread(_path + _name + _op.int2string(i+1) + _ext, IMREAD_GRAYSCALE);
+    cout << _path + _name + _op.int2string(i) + _ext << endl;
     displayMatches(_goodMatches, kpt1, kpt2, img1, img2, "C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/features/" + _op.int2string(i) + ".png");
+}
+
+void affineTransform::setMeanTransform(const cv::Mat &meanTransform)
+{
+    _meanTransform = meanTransform;
+}
+
+void affineTransform::setImgStart(const int &imgStart)
+{
+    _imgStart = imgStart;
+}
+
+void affineTransform::setImgEnd(const int &imgEnd)
+{
+    _imgEnd = imgEnd;
+}
+
+void affineTransform::setPath(const std::string &path)
+{
+    _path = path;
+}
+
+void affineTransform::setName(const std::string &name)
+{
+    _name = name;
+}
+
+void affineTransform::setExt(const std::string &ext)
+{
+    _ext = ext;
+}
+
+cv::Mat affineTransform::meanTransform() const
+{
+    return _meanTransform;
+}
+
+Mat affineTransform::mean(std::vector<Mat> vect) const
+{
+    Mat res = Mat::zeros(vect.at(0).size(), vect.at(0).type());
+    for(unsigned int i = 0; i<vect.size(); i++)
+        res += vect.at(i)/(double)vect.size();
+    return res;
 }

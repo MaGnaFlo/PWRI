@@ -1,7 +1,4 @@
 #include "featuredetector.h"
-#include "operation.h"
-#include "assert.h"
-#include <algorithm>
 
 using namespace std;
 using namespace cv;
@@ -9,12 +6,10 @@ using namespace cv::xfeatures2d;
 
 bool matchCmp(DMatch a, DMatch b) { return a.distance < b.distance; }
 
-
 featureDetector::featureDetector()
 {
     _minHessian = 600;
     _detector = SURF::create(_minHessian);
-
 }
 
 featureDetector::featureDetector(int minHessian)
@@ -27,8 +22,6 @@ void featureDetector::findKeypoints(string path, int oneOrTwo)
 {
     Mat img;
     img = imread(path, IMREAD_GRAYSCALE);
-    std::cout << path << std::endl;
-
     assert(img.data);
 
     switch(oneOrTwo) {
@@ -42,9 +35,7 @@ void featureDetector::findKeypoints(string path, int oneOrTwo)
         _detector->compute(img, _keyPoint2, _descriptor2);
     break;
     }
-
 }
-
 
 void featureDetector::findMatches()
 {
