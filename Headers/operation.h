@@ -1,3 +1,13 @@
+/*!
+ * Authors : Florian Lardeux, Thomas Maifret, Victor Petitjean
+ * November 2015
+ *
+ * Operation is a carryall class that contains useful but simple and
+ * general operations.
+ * These operations can for instance convert int to/from string,
+ * calculate the mean of a set of matrices ...
+*/
+
 #ifndef OPERATION_H
 #define OPERATION_H
 
@@ -19,7 +29,8 @@ class Operation
 public:
     //Constructors
     Operation();
-
+	
+    //Methods
     std::string int2string(int n);
     cv::Mat convert2x3to3x3(cv::Mat transf2x3);
     cv::Mat meanMat(const std::vector<cv::Mat> matrices);

@@ -10,8 +10,6 @@
 
 using namespace std;
 
-///// CONSTRUCTORS /////
-
 CalibrationFileManager::CalibrationFileManager()
 {
     _calibMat = cv::Mat::zeros(2,3, CV_64F);
@@ -25,23 +23,14 @@ CalibrationFileManager::CalibrationFileManager(int obj, int ldo, int ang, double
     _calibMat = cv::Mat::zeros(2,3, CV_64F);
 }
 
-
-///// METHODS /////
-
-/*!
- * loadfile loads the calibration file contained in the selected file.
- * If the file has a particular name, _isStantard is set to false.
- * Else, the open file has a name defined by tbhe setup used.
-*/
-
 void CalibrationFileManager::loadFile()
 {
     fstream fs;
     string line;
     string fileName;
     string ext = ".txt";
-
     //This condition assess if the user wants to use the standard calibration file system or a specific one he chose.
+    //
     if(_isStandard)
     {
         stringstream ss_name;
@@ -83,11 +72,6 @@ void CalibrationFileManager::loadFile()
         }
     _isOpen = true;
 }
-
-/*!
- * savefile saves the calibration matrix in a text file.
- * if _isStandard is true, the name is created by the method.
-*/
 
 void CalibrationFileManager::saveFile()
 {
@@ -149,16 +133,10 @@ void CalibrationFileManager::saveFile()
     _isOpen = false;
 }
 
-
-///// GETTERS /////
-
 cv::Mat CalibrationFileManager::calibMat() const
 {
     return _calibMat;
 }
-
-
-///// SETTERS /////
 
 void CalibrationFileManager::setCalibMat(const cv::Mat &calibMat)
 {
@@ -169,19 +147,6 @@ void CalibrationFileManager::setIsStandard(bool isStandard)
 {
     _isStandard = isStandard;
 }
-
-
-
-
-/*!
- * \author : Florian Lardeux, Thomas Maifret, Victor Petitjean
- * November 2015
- * The Setup class is a structure containing a setup of the experimentation.
- * It contains 4 arguments, and it's mainly used by the following class, ClibrationFileManager.
-*/
-
-
-///// CONSTRUCTORS /////
 
 Setup::Setup() :
     _obj(10), _ldo(600), _ang(50), _ind(1.5)

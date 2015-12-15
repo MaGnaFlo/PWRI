@@ -1,11 +1,3 @@
-/*!
- * \authors : Florian Lardeux, Thomas Maifret, Victor Petitjean
- * November 2015
- *
- * FeatureDetector uses OpenCV tools to compute key-points and matches
- * on pictures using SIFT.
-*/
-
 #ifndef FEATUREDETECTOR_H
 #define FEATUREDETECTOR_H
 
@@ -31,12 +23,9 @@ public:
     featureDetector();
     featureDetector(int minHessian);
 
-    //Methods
     void findKeypoints(std::string path, int oneOrTwo);
     void findMatches();
     void switch2to1();
-
-    //Getters
     std::vector<cv::DMatch> getSortedMatches() {return _matches;}
     std::vector<cv::KeyPoint> getKeyPoints(int oneOrTwo) {return (oneOrTwo == 1)?_keyPoint1:_keyPoint2;}
 

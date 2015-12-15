@@ -1,10 +1,3 @@
-/*!
- * \authors : Florian Lardeux, Victor Petitjean, Thomas Maifret
- * November 2015
- * 
- * dataAnalyzer is used to analyze spectra, such as finding its minima.
-*/
-
 #ifndef DATAANALYZER_H
 #define DATAANALYZER_H
 
@@ -28,12 +21,6 @@ public:
     dataAnalyzer();
     dataAnalyzer(const std::vector<double> &data);
 
-    //Methods
-    void findMax();
-    void findRegions();
-    void findBestMin(int &pos1, int &pos2);
-    void process(int &pos1, int &pos2);
-
     //Getters
     std::vector<double> getData() const {return _data;}
     std::vector<int> getMaxPos() const {return _maxPos;}
@@ -41,7 +28,14 @@ public:
     //Setters
     void setData(const std::vector<double> &data);
 
-    //Obsolete - kept to avoid conflicts
+    //Process
+    void findMax();
+    void findRegions();
+    void findBestMin(int &pos1, int &pos2);
+
+    void process(int &pos1, int &pos2);
+
+    //Obsolete
     std::vector<int> minDetection(int nbr_pic, std::vector<double> data);
     int maxDetection(std::vector<double> data);
 
@@ -51,7 +45,7 @@ private:
     std::vector<reg> _regions;
     std::vector<reg> _bestRegions;
 
-    //Obsolete - kept to avoid conflicts
+    //Obsolete
     std::vector<int> _minVector;
 };
 
