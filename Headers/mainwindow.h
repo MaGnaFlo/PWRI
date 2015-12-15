@@ -83,14 +83,25 @@ private slots:
     void on_specificCalibration_clicked();
     void on_SaveSpectrum_clicked();
     void on_checkBox_specificCalib_stateChanged(int arg1);
-
     void on_line_saveSpecific_editingFinished();
-
     void on_line_loadSpecCalib_editingFinished();
-
-    void on_btn_testSpectrePixel_clicked();
-
+    void on_btn_SpectrePixel_clicked();
     void on_btn_SaveRawData_clicked();
+    void on_checkBox_applyFilter_clicked();
+    void ChangeSpinBox(int sliderValue) {
+        if (ui->doubleSpinBox_std->value() != sliderValue)
+            ui->doubleSpinBox_std->setValue((double)sliderValue*ui->doubleSpinBox_std->maximum()/ui->horizontalSlider_std->maximum()+0.01);
+      }
+    void ChangeSpinBox_OddNumbers(int sliderValue) {
+        if (ui->spinBox_size->value() != sliderValue)
+            ui->spinBox_size->setValue(sliderValue*2 + 1);
+      }
+    void on_horizontalSlider_size_valueChanged(int value);
+    void on_horizontalSlider_std_valueChanged(int value);
+
+    void on_spinBox_size_valueChanged(int arg1);
+
+    void on_doubleSpinBox_std_valueChanged(double arg1);
 
 private:
     Ui::MainWindow *ui;
@@ -109,8 +120,6 @@ private:
     int _imgStart;
     double _angleStart;
     double _angleStep;
-    //vector<double> _dataY;
-    //vector<double> _dataX;
     vector<int> _minVect;
     int _maxVect;
     QRubberBand *_rubberband;

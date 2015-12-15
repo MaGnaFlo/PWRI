@@ -1,15 +1,31 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////// MAINWINDOW
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*! \class MainWindow
+  \brief QMainWindow subclass that creates the main window of the software.
+
+  This is used to display the user interface. All the parameters are provided in here and all the classes
+  of the program are linked to this class.
+  This class controls all of the operations used in order to compute the results, calling different classes
+  from the software.
+*/
+
 #include "mainwindow.h"
 
 using namespace cv;
 using namespace std;
 
+/*!
+  \brief Basic constructor of the class.
+  Calls the parent's constuctor and set up all the widgets in the class.
+  Also set up the parameters such as \ref AffineTransform and \ref SpectrumExtractor
+*/
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    cout << "Avant setup" << endl;
     ui->setupUi(this);
-    cout << "Apres setup" << endl;
     ui->spectreBar->hide();
     ui->preprocBar->hide();
     ui->calibBar->hide();
@@ -17,8 +33,40 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lastNumber->setDisabled(true);
     _aff = new affineTransform();
     _spect = new SpectrumExtractor();
+    _spect->setFilterSize(3);
+    _spect->setStd(1.5);
+    ui->spinBox_size->setValue(3);
+    ui->doubleSpinBox_std->setValue(1.5);
     ui->tabWidget->setCurrentIndex(0);
     ui->customPlot->setEnabled(false);
+    ui->horizontalSlider_size->setEnabled(true);
+    ui->horizontalSlider_std->setEnabled(true);
+    ui->spinBox_size->setEnabled(true);
+    ui->doubleSpinBox_std->setEnabled(true);
+    ui->checkBox_applyFilter->setChecked(true);
+
+    //Filter graph set up
+    int size = ui->spinBox_size->value();
+    double std = ui->doubleSpinBox_std->value();
+    int length = 2*size*100 + 1;
+    QVector<double> x(length);
+    QVector<double> y(length);
+    double u;
+    for(int i = 0; i<length; i++)
+    {
+        u = size*(i/(double)length - 0.5);
+        x[i] = u;
+        y[i] = exp(-u*u/(2.*std*std))/(sqrt(2*PI)*std);
+    }
+    ui->customPlot2->addGraph();
+    ui->customPlot2->graph(0)->setPen(QPen(Qt::yellow));
+    ui->customPlot2->setBackground(Qt::darkGray);
+    ui->customPlot2->xAxis->setLabel("Pixels around the processed pixel");
+    ui->customPlot2->yAxis->setLabel("Value of the filter");
+    ui->customPlot2->yAxis->setRange(0, y[length/2]);
+    ui->customPlot2->xAxis->setRange(-size/2,size/2);
+    ui->customPlot2->graph(0)->setData(x,y);
+    ui->customPlot2->replot();
 
     //Parameters setup
     ui->line_lens->setText("4");
@@ -44,18 +92,25 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->getExtrema->setToolTip("This allows you to see where the minima are located. \nUse this after the pre-processing operation.");
 
     connect(ui->customPlot, SIGNAL(mouseMove(QMouseEvent*)), ui->customPlot, SLOT(showPointToolTip(QMouseEvent*)));
-
+    connect(ui->horizontalSlider_size, SIGNAL(valueChanged(int)), SLOT(ChangeSpinBox_OddNumbers(int)));
+    connect(ui->horizontalSlider_std, SIGNAL(valueChanged(int)), SLOT(ChangeSpinBox(int)));
     _rubberband = new QRubberBand(QRubberBand::Rectangle, this);
-
-    //
-    ui->spectreBar->setStyleSheet("QProgressBar {background: blue;}");
 }
 
+/*!
+  \brief Common destructor. Delete the pointers.
+*/
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete _aff;
+    delete _spect;
+    delete _rubberband;
 }
 
+/*!
+  \brief Set the angle step corresponding to the images and angles.
+*/
 void MainWindow::changeStep()
 {
     double step = (ui->angleEnd->value() - ui->angleStart->value())/(double)(_imgEnd - _imgStart);
@@ -108,7 +163,7 @@ void MainWindow::setCalibrationMatrix()
 void MainWindow::setSpectre()
 {
     delete _spect;
-    _spect = new SpectrumExtractor(_imgStart, _imgEnd, _angleStart, _angleStep, _pathS, _name, _ext);
+    _spect = new SpectrumExtractor(_imgStart, _imgEnd, _angleStart, _angleStep, ui->spinBox_size->value(), 1.5, _pathS, _name, _ext);
     ui->spectreBar->show();
     _spect->processSpectrumAverage(ui->spectreBar);
     ui->spectreBar->hide();
@@ -119,16 +174,9 @@ void MainWindow::makePlot()
     vector<double> dataX = _spect->dataX();
     vector<double> dataY = _spect->dataY();
     if(dataX.size() != dataY.size())
-    {
-        cout << "MainWindow::makePlot : Caution ! X and Y don't have the same size !" << endl;
         return;
-    }
     if(dataX.size() == 0 || dataY.size() == 0)
-    {
-        cout << "MainWindow::makePlot : Caution ! X and/or Y are empty !" << endl;
         return;
-    }
-
     int n_images = dataY.size();
 
     ui->customPlot->addGraph();
@@ -173,8 +221,6 @@ void MainWindow::on_preproc_clicked()
     ui->preprocBar->hide();
 
     setSpectre();
-
-    cout << "MainWindow::on_preproc_clicked : Setting spectre -> Creation of dataX and dataY." << endl;
 }
 
 void MainWindow::on_pushSelectImg_clicked()
@@ -467,14 +513,15 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
             int ydiff = _rubberband->mapFromGlobal((this->mapToGlobal(_rubberband->pos()))).y() + _rubberband->geometry().height() - widgetPos.y() - widgetGeometry.height();
             if(xdiff > 0) {
                 _rubberband->clearMask();
-                /*_rubberband->setGeometry(_rubberband->geometry().x(), _rubberband->geometry().y(),
-                                         _rubberband->geometry().width() - xdiff, _rubberband->geometry().height());*/
+                _rubberband->setGeometry(_rubberband->geometry().x(), _rubberband->geometry().y(),
+                                             _rubberband->geometry().width(), _rubberband->geometry().height() - ydiff - 10);
             }
-            if(ydiff > 0)
-            _rubberband->setGeometry(_rubberband->geometry().x(), _rubberband->geometry().y(),
+            if(ydiff > 0) {
+                _rubberband->setGeometry(_rubberband->geometry().x(), _rubberband->geometry().y(),
                                          _rubberband->geometry().width(), _rubberband->geometry().height() - ydiff - 10);
+                _rubberband->clearMask();
+            }
         }
-
     _rubberband->clearMask();
     _rubberband->hide();
 }
@@ -527,17 +574,26 @@ void MainWindow::on_line_loadSpecCalib_editingFinished()
     setCalibrationMatrix();
 }
 
-void MainWindow::on_btn_testSpectrePixel_clicked()
+void MainWindow::on_btn_SpectrePixel_clicked()
 {
-    ui->spectreBar->show();
-    _spect->processSpectrumAllPixels(ui->spectreBar);
-    ui->spectreBar->hide();
+    ui->resonanceMapsBar->show();
+    _spect->processSpectrumAllPixels(ui->resonanceMapsBar);
+    ui->resonanceMapsBar->hide();
 
     Mat minP = _spect->getMinP();
     Mat minS = _spect->getMinS();
-    cout << minP.size().height << endl;
-    imwrite(_pathS + "min20151214P.png", minP);
-    imwrite(_pathS + "min20151214S.png", minS);
+    string P_name = "resMapP";
+    string S_name = "resMapS";
+    imwrite(_pathS + P_name + _ext, minP);
+    imwrite(_pathS + S_name + _ext, minS);
+
+    QPixmap pixP(QString::fromStdString(_pathS + P_name + _ext));
+    QPixmap pixS(QString::fromStdString(_pathS + S_name + _ext));
+    int w = ui->resMapP->width();
+    int h = ui->resMapP->height();
+
+    ui->resMapP->setPixmap(pixP.scaled(w,h,Qt::KeepAspectRatio));
+    ui->resMapS->setPixmap(pixS.scaled(w,h,Qt::KeepAspectRatio));
 }
 
 void MainWindow::on_btn_SaveRawData_clicked()
@@ -549,12 +605,125 @@ void MainWindow::on_btn_SaveRawData_clicked()
     }
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save Raw Data"), QString::fromStdString(_pathS), tr("Text file (*.txt)"));
-    string path, name, ext;
-    int i;
-    _op.readFileName(fileName.toStdString(), path, name, i, ext, false);
+    if(!fileName.isEmpty())
+    {
+        string path, name, ext;
+        int i;
+        _op.readFileName(fileName.toStdString(), path, name, i, ext, false);
+        DataFileManager dfm(_spect->dataX(), _spect->dataY(), path, name);
+        dfm.saveFile();
+    }
+}
 
+void MainWindow::on_checkBox_applyFilter_clicked()
+{
+    if(ui->checkBox_applyFilter->isChecked())
+    {
+        _spect->setFilterSize(ui->spinBox_size->value());
+        ui->horizontalSlider_size->setEnabled(true);
+        ui->spinBox_size->setEnabled(true);
+        ui->horizontalSlider_std->setEnabled(true);
+        ui->doubleSpinBox_std->setEnabled(true);
+    }
+    else
+    {
+        _spect->setFilterSize(1);
+        ui->horizontalSlider_size->setEnabled(false);
+        ui->spinBox_size->setEnabled(false);
+        ui->horizontalSlider_std->setEnabled(false);
+        ui->doubleSpinBox_std->setEnabled(false);
+    }
+}
 
-    DataFileManager dfm(_spect->dataX(), _spect->dataY(), path, name);
-    dfm.saveFile();
-    cout << dfm.isOpen() << endl;
+void MainWindow::on_horizontalSlider_size_valueChanged(int value)
+{
+    int size = ui->spinBox_size->value();
+    double std = ui->doubleSpinBox_std->value();
+    int length = 2*size*100 + 1;
+    QVector<double> x(length);
+    QVector<double> y(length);
+    double u;
+    for(int i = 0; i<length; i++)
+    {
+        u = size*(i/(double)length - 0.5);
+        x[i] = u;
+        y[i] = exp(-u*u/(2.*std*std))/(sqrt(2*PI)*std);
+    }
+    ui->customPlot2->yAxis->setRange(0, y[length/2]);
+    ui->customPlot2->xAxis->setRange(-size/2,size/2);
+    ui->customPlot2->graph(0)->setData(x,y);
+    ui->customPlot2->replot();
+
+    _spect->setFilterSize(value);
+}
+
+void MainWindow::on_horizontalSlider_std_valueChanged(int value)
+{
+    int size = ui->spinBox_size->value();
+    double std = ui->doubleSpinBox_std->value();
+    int length = 2*size*100 + 1;
+    QVector<double> x(length);
+    QVector<double> y(length);
+    double u;
+    for(int i = 0; i<length; i++)
+    {
+        u = size*(i/(double)length - 0.5);
+        x[i] = u;
+        y[i] = exp(-u*u/(2.*std*std))/(sqrt(2*PI)*std);
+    }
+    ui->customPlot2->yAxis->setRange(0, y[length/2]);
+    ui->customPlot2->xAxis->setRange(-size/2,size/2);
+    ui->customPlot2->graph(0)->setData(x,y);
+    ui->customPlot2->replot();
+
+    _spect->setStd(value);
+}
+
+void MainWindow::on_spinBox_size_valueChanged(int arg1)
+{
+    if(arg1<3)
+        ui->spinBox_size->setValue(3);
+    if(arg1%2==0)
+        ui->spinBox_size->setValue(arg1+1);
+    int size = ui->spinBox_size->value();
+    double std = ui->doubleSpinBox_std->value();
+    int length = 2*size*100 + 1;
+    QVector<double> x(length);
+    QVector<double> y(length);
+    double u;
+    for(int i = 0; i<length; i++)
+    {
+        u = size*(i/(double)length - 0.5);
+        x[i] = u;
+        y[i] = exp(-u*u/(2.*std*std))/(sqrt(2*PI)*std);
+    }
+    ui->customPlot2->yAxis->setRange(0, y[length/2]);
+    ui->customPlot2->xAxis->setRange(-size/2,size/2);
+    ui->customPlot2->graph(0)->setData(x,y);
+    ui->customPlot2->replot();
+
+    _spect->setFilterSize(arg1);
+}
+
+void MainWindow::on_doubleSpinBox_std_valueChanged(double arg1)
+{
+    (void)arg1;
+    int size = ui->spinBox_size->value();
+    double std = ui->doubleSpinBox_std->value();
+    int length = 2*size*100 + 1;
+    QVector<double> x(length);
+    QVector<double> y(length);
+    double u;
+    for(int i = 0; i<length; i++)
+    {
+        u = size*(i/(double)length - 0.5);
+        x[i] = u;
+        y[i] = exp(-u*u/(2.*std*std))/(sqrt(2*PI)*std);
+    }
+    ui->customPlot2->yAxis->setRange(0, y[length/2]);
+    ui->customPlot2->xAxis->setRange(-size/2,size/2);
+    ui->customPlot2->graph(0)->setData(x,y);
+    ui->customPlot2->replot();
+
+    _spect->setStd(arg1);
 }

@@ -16,7 +16,6 @@ affineTransform::affineTransform(int imgStart, int imgEnd, string path, string n
     _path = path;
     _name = name;
     _ext = ext;
-
     setMidXY();
     _meanTransform = Mat::zeros(2,3,CV_64F);
 }
@@ -115,6 +114,7 @@ void affineTransform::createWarpedImages_it(const string &pathSave, QProgressBar
         imwrite(pathSave + "Processed_" + _name + number + ".png", img_warped);
         progressBar->setValue((j-_imgStart)/(double)(_imgEnd-_imgStart)*100);
         progressBar->repaint();
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 }
 
@@ -226,6 +226,7 @@ void affineTransform::process(QProgressBar *progressBar)
 
         progressBar->setValue(i);
         progressBar->repaint();
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
     _meanTransform = mean(_affVector);
 }
