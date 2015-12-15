@@ -1,16 +1,6 @@
-/*!
- * \authors : Florian Lardeux, Victor Petitjean, Thomas Maifret
- * November 2015
- * 
- * dataAnalyzer is used to analyze spectra, such as finding its minima.
-*/
-
 #include "dataanalyzer.h"
 
 using namespace std;
-
-
-///// CONSTRUCTORS /////
 
 dataAnalyzer::dataAnalyzer() : _data(std::vector<double>())
 {
@@ -23,16 +13,6 @@ dataAnalyzer::dataAnalyzer(const std::vector<double> &data)
 
     _data = data;
 }
-
-
-///// METHODS /////
-
-/*!
- * findMax finds the position of every local max of a spectrum.
- * A point is a local max if it's greater than its 4 neighbours
- * (two points before it, two points after it). The methods also
- * deals with the border of the spectrum.
-*/
 
 void dataAnalyzer::findMax()
 {
@@ -50,12 +30,6 @@ void dataAnalyzer::findMax()
     if(_data[_data.size()-1] >= _data[_data.size()-2] && _data[_data.size()-1] >= _data[_data.size()-3])
         _maxPos.push_back(_data.size()-1);
 }
-
-/*!
- * findRegions finds, for each interval between two max, the region over which
- * we have to find the minimum.
- * It creates the structures reg corresponding to what it found.
-*/
 
 void dataAnalyzer::findRegions()
 {
@@ -89,12 +63,6 @@ void dataAnalyzer::findRegions()
     }
     return;
 }
-
-/*!
- * findBestMin computes the difference between the aera of each region (it's
- * a rectangle) and the integral of the spectrum over the region.
- * The 2 best mins are then saved in the args pos1 and pos2 (pos1<pos2)
-*/
 
 void dataAnalyzer::findBestMin(int &pos1, int &pos2)
 {
@@ -141,21 +109,12 @@ void dataAnalyzer::findBestMin(int &pos1, int &pos2)
 
 }
 
-/*!
- * process combines all the previous functions. It shoul be the only method to call.
-*/
-
 void dataAnalyzer::process(int &pos1, int &pos2)
 {
     findMax();
     findRegions();
     findBestMin(pos1, pos2);
 }
-
-/*!
- * OBSOLETE minDetection
- * It's an obsolete algorithm to dectect several min of a spectrum. Don't use it.
-*/
 
 vector<int> dataAnalyzer::minDetection(int nbr_pic, vector<double> data)
 {
@@ -195,11 +154,6 @@ vector<int> dataAnalyzer::minDetection(int nbr_pic, vector<double> data)
     return minVector;
 }
 
-/*!
- * OBSOLETE maxDetection
- * It's an obsolete algorithm to dectect the max of a spectrum. Don't use it.
-*/
-
 int dataAnalyzer::maxDetection(std::vector<double> data)
 {
     std::vector<int>::iterator res = min_element(_minVector.begin(), _minVector.end());
@@ -212,9 +166,6 @@ int dataAnalyzer::maxDetection(std::vector<double> data)
 
     return maxPos;
 }
-
-
-///// SETTERS /////
 
 void dataAnalyzer::setData(const std::vector<double> &data)
 {

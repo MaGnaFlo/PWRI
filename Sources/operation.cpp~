@@ -1,30 +1,10 @@
-/*!
- * Authors : Florian Lardeux, Thomas Maifret, Victor Petitjean
- * November 2015
- *
- * Operation is a carryall class that contains useful but simple and
- * general operations.
- * These operations can for instance convert int to/from string,
- * calculate the mean of a set of matrices ...
-*/
-
 #include "operation.h"
 
 using namespace std;
 
-
-///// CONSTRUCTOR /////
 Operation::Operation()
 {
 }
-
-
-///// METHODS /////
-
-/*!
-	 * int2string simply converts an int between 0 & 999 into a string of 3 characters
-	 * (like "012")
-	*/
 
 std::string Operation::int2string(int n)
 {
@@ -40,11 +20,6 @@ std::string Operation::int2string(int n)
     return number;
 }
 
-/*!
-	 * convert2x3to3x3 converts an affine transformation matrix (2x3) into a homogeneous
-	 * matrix (3x3). The last line of the resulting matrix is {0,0,1}
-	*/
-
 cv::Mat Operation::convert2x3to3x3(cv::Mat transf2x3)
 {
     cv::Mat transf3x3 = cv::Mat::zeros(3,3,CV_64F);
@@ -55,10 +30,6 @@ cv::Mat Operation::convert2x3to3x3(cv::Mat transf2x3)
     return transf3x3;
 }
 
-/*!
-	 * meanMat returns the mean of a vector of matrices (with the same size)
-	*/
-
 cv::Mat Operation::meanMat(const std::vector<cv::Mat> matrices)
 {
     assert(matrices.size() != 0);
@@ -67,17 +38,6 @@ cv::Mat Operation::meanMat(const std::vector<cv::Mat> matrices)
         mean += matrices.at(i) / (double) matrices.size();
     return mean;
 }
-
-/*!
-	 * readFileName returns (in the references) the path, filename, number and extension of a file whose title
-	 * looks like "C:/folder1/folder2/name of the file 012.png" for example. In such a case, 
-	 *    path     = "C:/folder1/folder2/"
-	 *    name     = "name of the file "
-	 *    imgStart = 12
-	 *  & ext      = ".png"
-	 *
-	 * If the file doesn't contain a number, withNumber can be set to false and then, no number will be expected
-	*/
 
 void Operation::readFileName(std::string filePath, std::string &path, std::string &name, int &imgStart, std::string &ext, bool withNumber)
 {
@@ -116,10 +76,6 @@ void Operation::readFileName(std::string filePath, std::string &path, std::strin
         path = filePath.substr(0, iName);
 }
 
-/*!
-	 * string2int return the int corresponding to the 3-character string ("012" gives 12)
-	*/
-
 int Operation::string2int(const string imgStart)
 {
     if(imgStart.length() != 3)
@@ -148,11 +104,6 @@ int Operation::string2int(const string imgStart)
     return 100*c + 10*d + u;
 }
 
-/*!
-	 * findlastImage looks into the folder of the file [path+name+imgStart+ext], and searches for
-	 * the last image with the same name (but with a different number)
-	*/
-
 int Operation::findlastImage(string path, string name, string ext, int imgStart)
 {
     string mypath = path + name + int2string(imgStart) + ext;
@@ -168,11 +119,6 @@ int Operation::findlastImage(string path, string name, string ext, int imgStart)
     }
     return i-1;
 }
-
-/*!
-	 * minAndMaxVectorDouble takes a vector of double, and returns (in the references)
-	 * the min and max of the vector (the values, not the positions)
-	*/
 
 void Operation::minAndMaxVectorDouble(const std::vector<double> &vec, double &m, double &M)
 {

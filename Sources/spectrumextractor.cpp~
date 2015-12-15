@@ -1,19 +1,7 @@
-/*!
- * Author : Florian Lardeux, Thomas Maifret, Victor Petitjean
- * November 2015
- * 
- * The class SpectrumExtractor is the tool used to calculate the spectrum from raw data.
- * From a set of images, it can return the spectrum over the entire image, over a region
- * of interest, or for each pixel (filtered)
-*/
-
 #include "spectrumextractor.h"
 
 using namespace cv;
 using namespace std;
-
-
-///// CONSTRUCTORS /////
 
 SpectrumExtractor::SpectrumExtractor()
 {
@@ -49,14 +37,6 @@ SpectrumExtractor::SpectrumExtractor(int imgStart, int imgEnd, double angleStart
     cout << "SpectrumExtractor::SpectrumExtractor : fin du constructeur" << endl;
 }
 
-
-///// METHODS /////
-
-/*!
-     * getDataBlock returns one specific point of a spectrum (defined by i) of a pixel
-     * defined by x and y.
-    */
-
 double SpectrumExtractor::getDataBlock(const int x, const int y, const int i)
 {
     assert(x>=0 && x<_sizeBlock);
@@ -67,11 +47,6 @@ double SpectrumExtractor::getDataBlock(const int x, const int y, const int i)
 
     return _dataBlock[pos];
 }
-
-/*!
-	* getDataBlockSpectre returns the whole spectrum (vector of double) for the pixel
-	* defined by x and y.
-*/
 
 std::vector<double> SpectrumExtractor::getDataBlockSpectre(const int x, const int y)
 {
@@ -84,11 +59,6 @@ std::vector<double> SpectrumExtractor::getDataBlockSpectre(const int x, const in
     return _dataY;
 }
 
-/*!
-	* setDataBlock sets the value of _dataBlock for the point (x,y), at the angle i.
-	* The new value is defined by the arg value.
-*/
-
 void SpectrumExtractor::setDataBlock(const int x, const int y, const int i, const double value)
 {
     assert(x>=0 && x<_sizeBlock);
@@ -99,11 +69,6 @@ void SpectrumExtractor::setDataBlock(const int x, const int y, const int i, cons
 
     _dataBlock[pos] = value;
 }
-
-/*!
-     * processSpectrumAverage returns the mean spectrum of an entire image.
-     * We can give it a pointer on a progress bar Qt, to update it while processing
-    */
 
 void SpectrumExtractor::processSpectrumAverage(QProgressBar *progressBar)
 {
@@ -135,11 +100,6 @@ void SpectrumExtractor::processSpectrumAverage(QProgressBar *progressBar)
         progressBar->repaint();
     }
 }
-
-/*!
-     * processSpectrumZone returns the mean spectrum over a certain rectangular region,
-     * defined by its top-left corner, its width and its height.
-    */
 
 void SpectrumExtractor::processSpectrumZone(int width, int height, int posX, int posY)
 {
@@ -175,11 +135,6 @@ void SpectrumExtractor::processSpectrumZone(int width, int height, int posX, int
         _dataX[i-_imgStart] = _angleStart + i*_angleStep;
     }
 }
-
-/*!
-     * processSpectrumPixelBlock returns _dataBlock, which contains all the spectrum
-     * per pixel over a square of size _sizeBlock
-    */
 
 void SpectrumExtractor::processSpectrumPixelBlock(int posBlockX, int posBlockY)
 {
@@ -230,12 +185,6 @@ void SpectrumExtractor::processSpectrumPixelBlock(int posBlockX, int posBlockY)
     }
 }
 
-    /*!
-     * processSpectrumAllPixels returns two images that correspond to the first and second minimum of
-     * the spectrum over each pixel. The grey value of the images is directly linkable to the angle
-     * at which it appears (P or s resonance)
-    */
-
 void SpectrumExtractor::processSpectrumAllPixels(QProgressBar *progressBar)
 {
     int nbImages = _dataX.size();
@@ -271,16 +220,35 @@ void SpectrumExtractor::processSpectrumAllPixels(QProgressBar *progressBar)
         }
 }
 
+std::vector<double> SpectrumExtractor::dataX() const
+{
+    return _dataX;
+}
 
-///// PRIVATE METHODS /////
+std::vector<double> SpectrumExtractor::dataY() const
+{
+    return _dataY;
+}
 
-/*!
- * borderCorrect
- * nnoBorderProcessing
- * indexing
- * initAndProcessing
- * These 4 methods shouldn't be used outside of the class.
-*/
+/*std::vector<std::vector<double> > SpectrumExtractor::dataZ() const
+{
+    return _dataZ;
+}*/
+
+std::vector<double> SpectrumExtractor::dataBlock() const
+{
+    return _dataBlock;
+}
+
+cv::Mat SpectrumExtractor::getMinP() const
+{
+    return _minP;
+}
+
+cv::Mat SpectrumExtractor::getMinS() const
+{
+    return _minS;
+}
 
 int SpectrumExtractor::borderCorrect(int x, int y)
 {
@@ -382,37 +350,4 @@ void SpectrumExtractor::initAndProcess(int posBlockX, int posBlockY)
     filter[8] = .025;
 
     indexing(filter, posBlockX, posBlockY);
-}
-
-
-///// GETTERS /////
-
-std::vector<double> SpectrumExtractor::dataX() const
-{
-    return _dataX;
-}
-
-std::vector<double> SpectrumExtractor::dataY() const
-{
-    return _dataY;
-}
-
-/*std::vector<std::vector<double> > SpectrumExtractor::dataZ() const
-{
-    return _dataZ;
-}*/
-
-std::vector<double> SpectrumExtractor::dataBlock() const
-{
-    return _dataBlock;
-}
-
-cv::Mat SpectrumExtractor::getMinP() const
-{
-    return _minP;
-}
-
-cv::Mat SpectrumExtractor::getMinS() const
-{
-    return _minS;
 }

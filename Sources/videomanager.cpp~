@@ -41,18 +41,6 @@ videoManager::videoManager(string path, string extension, int n_images, string n
 
 ///// METHODS /////
 
-    /*! This method allows to create a video out of the image sequence you named in the constructor or
-     * using the setters.
-     */
-
-void videoManager::setVideo()
-{
-    // firstImg is an image from which we extract the size
-    Mat firstImg;
-    firstImg = imread(_path + "/001." + _ext);
-    _video.open(_path + "/" + _videoName + ".avi", -1, 15, Size(firstImg.size().width, firstImg.size().height), true);
-}
-
 /*! 
  * loadFile isn't supposed to be called in this class
 */
@@ -83,6 +71,18 @@ void videoManager::saveFile()
         img = imread(_path + _name + number + _ext, CV_LOAD_IMAGE_GRAYSCALE);
         _video.write(img);
     }
+}
+
+    /*! This method allows to create a video out of the image sequence you named in the constructor or
+     * using the setters.
+     */
+
+void videoManager::setVideo()
+{
+    // firstImg is an image from which we extract the size
+    Mat firstImg;
+    firstImg = imread(_path + "/001." + _ext);
+    _video.open(_path + "/" + _videoName + ".avi", -1, 15, Size(firstImg.size().width, firstImg.size().height), true);
 }
 
 

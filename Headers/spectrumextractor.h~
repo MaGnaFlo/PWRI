@@ -31,26 +31,57 @@ public:
     SpectrumExtractor(int imgStart, int imgEnd, double angleStart, double angleStep, std::string path, std::string name, std::string ext);
 
     //Setter & getter for _dataBlock
+    /*!
+     * With these methods, we can get one point of one spectrum, or one whole spectrum
+    */
     double getDataBlock(const int x, const int y, const int i);
     std::vector<double> getDataBlockSpectre(const int x, const int y);
     void setDataBlock(const int x, const int y, const int i, const double value);
 
     //Processes
+
     /*!
      * Amongst these processes, only processSpectrumAverage and processSpectrumAllPixels
      * should be used outside of the class !
     */
-    
+
+    /*!
+     * processSpectrumAverage returns the mean spectrum of an entire image.
+     * We can give it a pointer on a progress bar Qt, to update it while processing
+    */
     void processSpectrumAverage(QProgressBar *progressBar);
+
+    /*!
+     * processSpectrumZone returns the mean spectrum over a certain rectangular region,
+     * defined by its top-left corner, its width and its height.
+    */
     void processSpectrumZone(int width, int height, int posX, int posY);
+
+    /*!
+     * processSpectrumPixelBlock returns _dataBlock, which contains all the spectrum per pixel over a square
+     * of size _sizeBlock
+    */
     void processSpectrumPixelBlock(int posBlockX, int posBlockY);
+
+    /*!
+     * processSpectrumAllPixels returns two images that correspond to the first and second minimum of
+     * the spectrum over each pixel. The grey value of the images is directly linkable to the angle
+     * at which it appears (P or s resonance)
+    */
     void processSpectrumAllPixels(QProgressBar *progressBar);
 
-    // "Private" processes
+    /*!
+     * borderCorrect
+     * noBorderProcessing
+     * indexing
+     * initAndProcessing
+     * These methods are used in the previous methods. You are not supposed to use them. Sorry !
+    */
     int borderCorrect(int x, int y);
     void noBorderProcessing(std::vector<double> filter, int posBlockX, int posBlockY);
     void indexing(std::vector<double> filter, int posBlockX, int posBlockY);
     void initAndProcess(int posBlockX, int posBlockY);
+
 
     //Getters
     std::vector<double> dataX() const;
