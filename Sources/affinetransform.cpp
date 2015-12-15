@@ -8,7 +8,8 @@ affineTransform::affineTransform()
     _meanTransform = Mat::zeros(2,3,CV_64F);
     _affVector.push_back(Mat::zeros(2,3,CV_64F));
 }
-//MODIFICATION
+//MODION
+
 affineTransform::affineTransform(int imgStart, int imgEnd, string path, string name, string ext)
 {
     _imgEnd = imgEnd;
@@ -19,7 +20,7 @@ affineTransform::affineTransform(int imgStart, int imgEnd, string path, string n
     setMidXY();
     _meanTransform = Mat::zeros(2,3,CV_64F);
 }
-
+//Mod
 void affineTransform::setMidXY()
 {
     Mat im = imread(_path + _name + _op.int2string(_imgStart) + _ext, IMREAD_GRAYSCALE);
