@@ -1,15 +1,29 @@
+/*!
+ * Authors : Florian Lardeux, Thomas Maifret, Victor Petitjean
+ * November 2015
+ *
+ * affineTransform is a complete class that calculates the affine transformation between images
+ * using feature detection & feature matching. It also saves the undistorted images.
+ * It relies on the FeatureDetector class to detect features with OpenCV tools
+*/
+
 #include "affinetransform.h"
 
 using namespace std;
 using namespace cv;
+
+///// CONSTRUCTORS /////
 
 affineTransform::affineTransform()
 {
     _meanTransform = Mat::zeros(2,3,CV_64F);
     _affVector.push_back(Mat::zeros(2,3,CV_64F));
 }
-//MODION
 
+/*!
+	 * This constructor sets all the images that ar going to be processed.
+	 * The images go from [path + name + imgStart + ext] to [path + name + imgEnd + ext]
+*/
 affineTransform::affineTransform(int imgStart, int imgEnd, string path, string name, string ext)
 {
     _imgEnd = imgEnd;
@@ -17,10 +31,17 @@ affineTransform::affineTransform(int imgStart, int imgEnd, string path, string n
     _path = path;
     _name = name;
     _ext = ext;
+
     setMidXY();
     _meanTransform = Mat::zeros(2,3,CV_64F);
 }
-//Mod
+
+
+///// METHODS /////
+
+/*!
+	 * setMidXY sets the middle of the images (height and width over 2)
+	*/
 void affineTransform::setMidXY()
 {
     Mat im = imread(_path + _name + _op.int2string(_imgStart) + _ext, IMREAD_GRAYSCALE);
@@ -28,6 +49,10 @@ void affineTransform::setMidXY()
     _midY = im.size().height / 2;
     cout << "affineTransform::setMidXY : midX = " << _midX << " and midY = " << _midY << endl;
 }
+
+	/*!
+	 * UNUSED createWarpedImages_rec
+	*/
 
 cv::Mat affineTransform::createWarpedImages_rec(const int &i)
 {
@@ -62,6 +87,10 @@ cv::Mat affineTransform::createWarpedImages_rec(const int &i)
     }
 }
 
+	/*!
+	 * UNUSED createWarpedImages_it
+	*/
+
 void affineTransform::createWarpedImages_it()
 {
     cout << "affineTransform::createWarpedImages_it : Utilisation de createWarpedImages iterative (sans moyenne)" << endl;
@@ -90,6 +119,12 @@ void affineTransform::createWarpedImages_it()
     }
 }
 
+	/*!
+	 * createWarpedImages_it saves the processed (aka undistorded) images with a recursive way
+	 * createWarpedImages_it takes a saving path. The processed images have the name [pathSave + "Processed_" + name + number + ext]
+	 * The method also takes a pointer to a QProgressBar, to update it while processing
+	*/
+
 void affineTransform::createWarpedImages_it(const string &pathSave, QProgressBar *progressBar)
 {
     cout << "affineTransform::createWarpedImages_it : Utilisation de createWarpedImages iterative (avec moyenne)" << endl;
@@ -115,9 +150,14 @@ void affineTransform::createWarpedImages_it(const string &pathSave, QProgressBar
         imwrite(pathSave + "Processed_" + _name + number + ".png", img_warped);
         progressBar->setValue((j-_imgStart)/(double)(_imgEnd-_imgStart)*100);
         progressBar->repaint();
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
 }
+
+/*!
+	 * findAffineTransform calculates the transform matrix between two (successive) images
+	 * Feature matches (pairs of keypoints) have been previously calculated, and the methods selects the best pairs
+	 * to calculate the best transformation matrix
+	*/
 
 void affineTransform::findAffineTransform(const std::vector<DMatch> &matches, const std::vector<KeyPoint> &keypoint_1, const std::vector<KeyPoint> &keypoint_2)
 {
@@ -199,6 +239,12 @@ void affineTransform::findAffineTransform(const std::vector<DMatch> &matches, co
     std::cout << "affineTransform::findAffineTransform : " << affineTrans << endl;
 }
 
+/*!
+	 * process is the method to call to calculate the mean transformation matrix of an entire set.
+	 * It calls findAffineTransform for each pair of images, after having found the keypoints and matches.
+	 * Then it returns the mean transformation matrix
+	*/
+
 void affineTransform::process(QProgressBar *progressBar)
 {
     featureDetector featDet;
@@ -227,17 +273,23 @@ void affineTransform::process(QProgressBar *progressBar)
 
         progressBar->setValue(i);
         progressBar->repaint();
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
     }
     _meanTransform = mean(_affVector);
 }
 
+/*!
+	 * displayMatches displays the matches, to verify the results returned by the OpenCV tools
+	*/
 void affineTransform::displayMatches(const std::vector<DMatch> &matches, const std::vector<KeyPoint> &keypoint_1, const std::vector<KeyPoint> &keypoint_2, const Mat &img1, const Mat &img2, const string path)
 {
     Mat img_out;
     drawMatches(img1, keypoint_1, img2, keypoint_2, matches, img_out, Scalar::all(-1), Scalar::all(-1), vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
     imwrite(path, img_out);
 }
+
+/*!
+	 * displayFeatures displays the keypoints, to verify the results returned by the OpenCV tools
+	*/
 
 void affineTransform::displayFeatures(const std::vector<KeyPoint> &kpt1, const std::vector<KeyPoint> &kpt2, int i) {
 
@@ -246,6 +298,8 @@ void affineTransform::displayFeatures(const std::vector<KeyPoint> &kpt1, const s
     cout << _path + _name + _op.int2string(i) + _ext << endl;
     displayMatches(_goodMatches, kpt1, kpt2, img1, img2, "C:/Users/Florian/Documents/Travail/Supoptique/3A/Projet PWRi/data/res/features/" + _op.int2string(i) + ".png");
 }
+
+///// SETTERS /////
 
 void affineTransform::setMeanTransform(const cv::Mat &meanTransform)
 {
@@ -277,10 +331,16 @@ void affineTransform::setExt(const std::string &ext)
     _ext = ext;
 }
 
+
+///// GETTERS /////
+
 cv::Mat affineTransform::meanTransform() const
 {
     return _meanTransform;
 }
+
+
+///// PRIVATE METHOD /////
 
 Mat affineTransform::mean(std::vector<Mat> vect) const
 {
